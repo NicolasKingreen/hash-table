@@ -5,55 +5,55 @@ from helpers import make_pi
 
 
 PI_DIGITS = [digit for digit in make_pi()]  # first 20 digits of pi
-
 PERMUTATION_TABLE_SIZE = 20
 PERMUTATION_TABLE = [random.sample(PI_DIGITS, PERMUTATION_TABLE_SIZE)
                      for _ in range(PERMUTATION_TABLE_SIZE)]
 
 
-def my_hash(line, pti=0):
-    return (sum(ord(c) * PERMUTATION_TABLE[pti][i % PERMUTATION_TABLE_SIZE] for i, c in enumerate(line))
-            // len(line)) % hash_table_size
+class HashTable:
 
+    def __init__(self, size=2**7):
+        self._hash_table_size = size
+        self._hash_table = [None for _ in range(self._hash_table_size)]
 
-def hash_add(hash_table, line):
-    collisions = 0
-    hash_value = my_hash(line)
-    while hash_table[hash_value] is not None:
-        hash_value = my_hash(line, collisions)
-        collisions += 1
-        if collisions == 20:
-            print("Couldn't add", line)
-            break
-    hash_table[hash_value] = (line, collisions)
+    def _hash(self, line, pti=0):
+        return (sum(ord(c) * PERMUTATION_TABLE[pti][i % PERMUTATION_TABLE_SIZE]
+                    for i, c in enumerate(line))
+                // len(line)) % self._hash_table_size
 
+    def _bubble_hash_table(self):
+        self._hash_table_size *= 2
+        old_hash_table = self._hash_table[:]
+        self._hash_table = [None for _ in range(self._hash_table_size)]
+        for item in old_hash_table:
+            if item is not None:
+                self.add(item[0])
 
-def bubble_hash(hash_table):
-    global hash_table_size
-    hash_table_size *= 2
-    new_hash_table = [None for _ in range(hash_table_size)]
-    for item in hash_table:
-        if item is not None:
-            hash_add(new_hash_table, item[0])
-    return new_hash_table
+    def add(self, line):
+        collisions = 0
+        hash_value = self._hash(line)
+        while self._hash_table[hash_value] is not None:
+            collisions += 1
+            if collisions == 20:
+                print("Couldn't add", line)
+                break
+            hash_value = self._hash(line, collisions)
+        self._hash_table[hash_value] = (line, collisions)
 
-
-def print_hash_table(hash_table):
-    hash_table_size = len(hash_table)
-    print(f'\nPrinting hash table (size {hash_table_size})')
-    print('-' * 16)
-    total_items = 0
-    for i, item in enumerate(hash_table):
-        if item is not None:
-            total_items += 1
-            print(i+1, item)
-    print('-' * 16)
-    print(f'Total items: {total_items}/{hash_table_size}\nDensity is {total_items / hash_table_size * 100:.2f}%\n')
+    def print(self):
+        print(f'\nPrinting hash table (size {self._hash_table_size})')
+        print('-' * 16)
+        total_items = 0
+        for i, item in enumerate(self._hash_table):
+            if item is not None:
+                total_items += 1
+                print(i + 1, item)
+        print('-' * 16)
+        print(f'Total items: {total_items}/{self._hash_table_size}\nDensity is {total_items / self._hash_table_size * 100:.2f}%\n')
 
 
 # tests
-hash_table_size = 2 ** 7
-hash_table = [None for _ in range(hash_table_size)]
+hash_table = HashTable()
 
 text = """Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec maximus elit nec urna vulputate vehicula. Vivamus ac convallis lorem. Etiam interdum enim id erat accumsan aliquet. Curabitur imperdiet, ligula et hendrerit scelerisque, nisl enim auctor massa, rhoncus consequat nibh ex quis ipsum. Vivamus dignissim mi sed dui bibendum, sit amet blandit orci volutpat. Etiam ac justo sed sapien accumsan interdum nec ut arcu. Pellentesque dapibus erat orci, non consectetur tortor tincidunt ac. Donec posuere eu ipsum vel ornare. Nulla nisl massa, molestie tempor tincidunt eu, pharetra quis quam.
 Phasellus lacinia felis sit amet erat blandit porttitor. Aenean et urna finibus, euismod ipsum et, dapibus metus. Quisque bibendum fermentum elit sit amet pharetra. Praesent eros quam, euismod eu sem at, ornare viverra nisi. Pellentesque pretium fermentum nibh, scelerisque laoreet lectus tincidunt id. Aliquam erat volutpat. Proin porttitor, purus cursus efficitur tempus, mauris massa dignissim metus, vel condimentum neque dui id tortor.
@@ -64,9 +64,8 @@ Proin condimentum fermentum sapien. Pellentesque in commodo nibh, non commodo ju
 words = ["".join([c for c in word if c in string.ascii_letters]) for word in text.split()]
 print(len(words))
 for word in words:
-    hash_add(hash_table, word)
+    hash_table.add(word)
 
-
-print_hash_table(hash_table)
-hash_table = bubble_hash(hash_table)
-print_hash_table(hash_table)
+hash_table.print()
+hash_table._bubble_hash_table()
+hash_table.print()
