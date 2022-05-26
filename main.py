@@ -14,6 +14,61 @@ class HashTable:
 
     def __init__(self, size=2**7):
         self._hash_table_size = size
+        self._init_core_array()
+
+    def __repr__(self):
+        return f'<HashTable' \
+               f'(size: {self._hash_table_size}, ' \
+               f'total_items: {self.total_items}, ' \
+               f'density: {self.density})>'
+
+    @property
+    def total_items(self):
+        total_items = 0
+        for element in self._hash_table:
+            if element is not None:
+                total_items += 1
+        return total_items
+
+    @property
+    def density(self):
+        return self.total_items / self._hash_table_size
+
+    def add(self, line):
+        collisions = 0
+        hash_value = self._hash(line)
+        if self._hash_table[hash_value] and self._hash_table[hash_value][0] == line:
+            return
+        while self._hash_table[hash_value] is not None:
+            collisions += 1
+            if collisions == 20:
+                print("[Add] Couldn't add", line)
+                self.print_short()
+                self._bubble_hash_table()
+                collisions = 0
+            hash_value = self._hash(line, collisions)
+        self._hash_table[hash_value] = (line, collisions)
+
+    def print_short(self):
+        print(f'Total items: {self.total_items}/{self._hash_table_size}')
+        print(f'Density is {self.density:.2%}')
+
+    def print(self):
+        """
+        Prints out hash table size, non-empty elements and its density
+        """
+        print(f'\nHash table (size {self._hash_table_size})')
+        if self.total_items:
+            print('-' * 16)
+            total_items = 0
+            for i, item in enumerate(self._hash_table):
+                if item is not None:
+                    total_items += 1
+                    print(i + 1, item)
+            print('-' * 16)
+        self.print_short()
+
+    def _init_core_array(self):
         self._hash_table = [None for _ in range(self._hash_table_size)]
 
     def _hash(self, line, pti=0):
@@ -22,34 +77,13 @@ class HashTable:
                 // len(line)) % self._hash_table_size
 
     def _bubble_hash_table(self):
+        print("[BubbleHashTable] Expanding hash...")
         self._hash_table_size *= 2
         old_hash_table = self._hash_table[:]
-        self._hash_table = [None for _ in range(self._hash_table_size)]
+        self._init_core_array()
         for item in old_hash_table:
             if item is not None:
                 self.add(item[0])
-
-    def add(self, line):
-        collisions = 0
-        hash_value = self._hash(line)
-        while self._hash_table[hash_value] is not None:
-            collisions += 1
-            if collisions == 20:
-                print("Couldn't add", line)
-                break
-            hash_value = self._hash(line, collisions)
-        self._hash_table[hash_value] = (line, collisions)
-
-    def print(self):
-        print(f'\nPrinting hash table (size {self._hash_table_size})')
-        print('-' * 16)
-        total_items = 0
-        for i, item in enumerate(self._hash_table):
-            if item is not None:
-                total_items += 1
-                print(i + 1, item)
-        print('-' * 16)
-        print(f'Total items: {total_items}/{self._hash_table_size}\nDensity is {total_items / self._hash_table_size * 100:.2f}%\n')
 
 
 # tests
@@ -62,10 +96,8 @@ Donec dignissim felis a sem bibendum, vitae tempor magna convallis. Vivamus sit 
 Proin condimentum fermentum sapien. Pellentesque in commodo nibh, non commodo justo. Duis gravida egestas nisl, vel malesuada est facilisis vitae. Nulla sapien sem, aliquam non ante vel, malesuada pulvinar turpis. In maximus porttitor tristique. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Ut lacus ex, consectetur vitae magna sed, pulvinar varius nulla. Proin vitae accumsan arcu. Pellentesque tristique vestibulum tristique. Aenean ullamcorper ornare lacus, sed ornare eros sodales ut. Donec vitae felis nulla. Etiam vestibulum scelerisque metus, at tempor sem placerat vitae. Integer volutpat tortor eget dolor rutrum viverra. 
 """
 words = ["".join([c for c in word if c in string.ascii_letters]) for word in text.split()]
-print(len(words))
+print("Total words:", len(words))
+print(hash_table)
 for word in words:
     hash_table.add(word)
-
-hash_table.print()
-hash_table._bubble_hash_table()
 hash_table.print()
